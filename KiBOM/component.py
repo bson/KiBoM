@@ -12,6 +12,44 @@ class Component():
     with accessors.  The xmlElement is held in field 'element'.
     """
 
+    SI_SUFFIXES = ["T", "G", "M", "k", "", "m", "u", "n", "p", "f"]
+
+    PASSIVE_REFS = ["C", "c", "R", "r", "L", "l", "X", "x", "Y", "y"]
+
+    @staticmethod
+    def expandSI(s):
+        ip = 0
+        fp = 0.0
+        fpfact = 0.1
+        suffix = 1
+        period = False
+
+        for c in s:
+            if c >= '0' and c <= '9':
+                digit = ord(c) - ord('0')
+                if (period):
+                    fp += fpfact * digit
+                    fpfact /= 10.
+                else:
+                    ip *= 10
+                    ip += digit
+            elif c == '.':
+                if period:          # Second period
+                    break
+                period = True       # First period
+            elif c in Component.SI_SUFFIXES:
+                if (suffix != 1):
+                    break
+                suffix = 1e3 ** (4 - Component.SI_SUFFIXES.index(c))
+                if period:
+                    break
+                period = True
+            else:
+                break
+
+        return (ip + fp) * suffix
+
+
     def __init__(self, xml_element, prefs=None):
         self.element = xml_element
         self.libpart = None
@@ -116,11 +154,20 @@ class Component():
     def setValue(self, value):
         """Set the value of this component"""
         v = self.element.getChild("value")
-        if v:
-            v.setChars(value)
+        self.order_value = None
 
     def getValue(self):
         return self.element.get("value")
+
+    def getValueForOrder(self):
+        if not hasattr(self, 'order_value') or self.order_value is None:
+            self.order_value = self.getValue()
+            if self.getPrefix() in Component.PASSIVE_REFS:
+                v = Component.expandSI(self.order_value)
+                if v != 0:
+                    self.order_value = v
+
+        return self.order_value
 
     def getField(self, name, ignoreCase=True, libraryToo=True):
         """Return the value of a field named name. The component is first

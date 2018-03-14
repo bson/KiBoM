@@ -24,6 +24,7 @@ class BomPref:
     OPT_MERGE_BLANK = "merge_blank_fields"
     OPT_IGNORE_DNF = "ignore_dnf"
     OPT_INCLUDE_VERSION = "include_version_number"
+    OPT_TYPE_SPLIT = "component_type_split"
 
     OPT_CONFIG_FIELD = "fit_field"
 
@@ -45,6 +46,7 @@ class BomPref:
         self.pcbConfig = "default"
         self.separatorCSV = None
         self.includeVersionNumber = True
+        self.compTypeSplit = False # Group components based on type
 
         # Default fields used to group components
         self.groups = [
@@ -59,12 +61,9 @@ class BomPref:
         self.regIncludes = []  # None by default
 
         self.regExcludes = [
-            [ColumnList.COL_REFERENCE,'^TP[0-9]*'],
             [ColumnList.COL_REFERENCE,'^FID'],
             [ColumnList.COL_PART,'mount.*hole'],
             [ColumnList.COL_PART,'solder.*bridge'],
-            [ColumnList.COL_PART,'test.*point'],
-            [ColumnList.COL_FP,'test.*point'],
             [ColumnList.COL_FP,'mount.*hole'],
             [ColumnList.COL_FP,'fiducial'],
         ]
@@ -107,6 +106,7 @@ class BomPref:
                 self.useRegex = self.checkOption(cf, self.OPT_USE_REGEX, default=True)
                 self.mergeBlankFields = self.checkOption(cf, self.OPT_MERGE_BLANK, default=True)
                 self.includeVersionNumber = self.checkOption(cf, self.OPT_INCLUDE_VERSION, default=True)
+                self.compTypeSplit = self.checkOption(cf, self.OPT_TYPE_SPLIT, default=False)
 
             if cf.has_option(self.SECTION_GENERAL, self.OPT_CONFIG_FIELD):
                 self.configField = cf.get(self.SECTION_GENERAL, self.OPT_CONFIG_FIELD)
@@ -158,6 +158,8 @@ class BomPref:
         self.addOption(cf, self.OPT_USE_REGEX, self.useRegex, comment="If '{opt}' option is set to 1, each component group will be tested against a number of regular-expressions (specified, per column, below). If any matches are found, the row is ignored in the output file".format(opt=self.OPT_USE_REGEX))
         self.addOption(cf, self.OPT_MERGE_BLANK, self.mergeBlankFields, comment="If '{opt}' option is set to 1, component groups with blank fields will be merged into the most compatible group, where possible".format(opt=self.OPT_MERGE_BLANK))
         self.addOption(cf, self.OPT_INCLUDE_VERSION, self.includeVersionNumber, comment="If '{opt}' option is set to 1, the schematic version number will be appended to the filename.")
+
+        self.addOption(cf, self.OPT_TYPE_SPLIT, self.compTypeSplit, comment="If '{opt}' is set to 1, a blank line will separate types of components based on the first character of the REFID.  E.g. C, R, U, J, etc.")
 
         cf.set(self.SECTION_GENERAL, '; Field name used to determine if a particular part is to be fitted')
         cf.set(self.SECTION_GENERAL, self.OPT_CONFIG_FIELD, self.configField)

@@ -49,6 +49,8 @@ def WriteCSV(filename, groups, net, headings, prefs):
         count = 0
         rowCount = 1
 
+        leadChar = ""
+
         for i, group in enumerate(groups):
             if prefs.ignoreDNF and not group.isFitted(): continue
 
@@ -56,6 +58,10 @@ def WriteCSV(filename, groups, net, headings, prefs):
 
             if prefs.numberRows:
                 row = [str(rowCount)] + row
+
+            if prefs.compTypeSplit and row[3][0] != leadChar:
+                leadChar = row[3][0]
+                writer.writerow([])
 
             #deal with unicode characters
             #row = [el.decode('latin-1') for el in row]
